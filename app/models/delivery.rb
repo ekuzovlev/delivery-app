@@ -1,4 +1,6 @@
 class Delivery
+  attr_accessor :delivery_errors
+
   def initialize(vendor:, order:)
     @vendor = vendor
     @person = order.person
@@ -6,24 +8,27 @@ class Delivery
   end
 
   def setup_delivery
-    get_delivery_params
+    response_from_delivery = retrieve_delivery_info
+    create_delivery(response_from_delivery)
 
-    if get_delivery_params.status == 'ok' && delivery_create
-      notify
-      { status: :ok }
-    else
-      { status: error }
-    end
+    notify if delivery_successful?
   end
 
   private
 
-  def delivery_create
-    Delivery.create(@person, @vendor, @product)
+  def delivery_successful?
+    delivery_errors.blank?
   end
 
-  def get_delivery_params
-    # Отправляем запрос в службу доставки с параметрами и данными по получателю
+  def create_delivery(response_from_delivery)
+    Delivery.create(person: @person, vendor: @vendor, product: @product, response_from_delivery:)
+  end
+
+  def retrieve_delivery_info
+    # Отправляем запрос в службу доставки с параметрами и данными по получателю, получаем response
+    delivery_errors << response.status unless response.status == 'ok'
+
+    response
   end
 
   def notify

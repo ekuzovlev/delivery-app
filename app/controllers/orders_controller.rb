@@ -1,6 +1,6 @@
 class OrdersController < ApplicationController
   def create
-    order = Order.new(product, current_user)
+    Order.new(product:, user: current_user)
 
     order_result = OrderProcessor.new(order).perform
 

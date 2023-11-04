@@ -1,27 +1,38 @@
+# frozen_string_literal: true
+
+# This class is responsible for processing completed orders,
+# specifically handling payment and delivery tracking.
 class OrderProcessor
+  attr_accessor :errors
+
   def initialize(order)
     @order = order
     @user = order.user
     @product = order.product
-
-    perform
   end
 
   def perform
-    result_purchase = ApplicationBilling.new(product, current_user).make_purchase
-    result_delivery = Delivery.new(vendor: sdek, order:).setup_delivery
+    purchase
+    return unless purchase.errors.blank? # TODO: реализовать обработку ошибок в классе Purchase
 
-    result = parse_response(result_purchase, result_delivery)
-
+    delivery
   end
 
   private
 
-  def parse_response(result_purchase, result_delivery)
-    if [result_purchase, result_delivery].include?(error)
-      { status: error }
-    else
-      { status: :ok }
-    end
+  def purchase
+    result_purchase = ApplicationBilling.new(product: @product, user: current_user).make_purchase
+
+    @errors << result_purchase.purchase_errors
+  end
+
+  def delivery
+    result_delivery = Delivery.new(vendor: :sdek, order: @order).setup_delivery
+
+    @errors << result_delivery.delivery_errors
+  end
+
+  def successful?
+    @errors.blank?
   end
 end
