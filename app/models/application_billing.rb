@@ -1,5 +1,5 @@
 class ApplicationBilling
-  def initialize(product, user)
+  def initialize(product:, user:)
     @product = product
     @user = user
   end
